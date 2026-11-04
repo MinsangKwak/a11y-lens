@@ -8,7 +8,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { WebContentsView, session } from 'electron';
-import { AUDIT, type AuditOptions, type AuditResult } from '@a11y-lens/core';
+import {
+  AUDIT, AXE_RULES, RUN_AXE, toIssues,
+  type AuditOptions, type AuditResult, type AxeOptions, type AxeResult,
+} from '@a11y-lens/core';
+// 규칙 엔진은 셸이 들고 있다 — core 는 의존성 0 을 지켜야 하므로 라이브러리를 품지 않는다
+import axe from 'axe-core';
 
 // 격리 월드 번호. 0 은 페이지의 메인 월드이고 낮은 번호는 Electron · 확장이 쓴다 —
 // 충돌하면 주입이 조용히 실패하므로 넉넉히 떨어진 값을 쓴다
@@ -41,6 +46,19 @@ export class Inspector {
     // AUDIT 은 바깥 스코프를 쓰지 않으므로 소스만 넘기면 그대로 돈다
     const code = `(${AUDIT.toString()})(${JSON.stringify(opts)})`;
     return (await this.view.webContents.executeJavaScriptInIsolatedWorld(WORLD, [{ code }])) as AuditResult;
+  }
+
+  /**
+   * 접근성 규칙을 돌린다. 명암비와 **같은 격리 월드**에서 돌려야
+   * 대상 페이지의 전역을 건드리지 않고 window.axe 가 그 월드에만 남는다.
+   */
+  async axe(opts: AxeOptions = {}): Promise<AxeResult> {
+    const ids = opts.rules?.length ? opts.rules : AXE_RULES.map((r) => r.id);
+    const world = this.view.webContents;
+    // 라이브러리를 먼저 넣는다. insertCSS 와 달리 CSP 는 격리 월드의 실행을 막지 못한다
+    await world.executeJavaScriptInIsolatedWorld(WORLD, [{ code: axe.source }]);
+    const code = `(${RUN_AXE.toString()})(${JSON.stringify(ids)})`;
+    return toIssues(await world.executeJavaScriptInIsolatedWorld(WORLD, [{ code }]), opts);
   }
 
   /** 목록에서 고른 자리를 대상 페이지에서 보여 준다 — 윤곽은 측정이 끝난 뒤에만 그린다 */

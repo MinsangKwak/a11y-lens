@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@a11y-lens/core": "workspace:*",
-    "@supabase/supabase-js": "^2.47.0"
+    "@supabase/supabase-js": "^2.47.0",
+    "axe-core": "^4.14.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.0",
