@@ -10,7 +10,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { AuditResult, Finding, Verdict } from '@a11y-lens/core';
-import type { Project, Snapshot, Who } from '../../preload/index.js';
+import type { Project, Snapshot, Who } from '../../preload/api.js';
 import { Findings, LABEL } from './Findings.js';
 import { Compare } from './Compare.js';
 import { Gate } from './Gate.js';
@@ -39,7 +39,7 @@ export function App() {
   // 로그인한 뒤에 프로젝트를 읽는다 — RLS 가 막으므로 미리 불러도 빈 배열이다
   useEffect(() => {
     if (!me) { setProjects([]); setProjectId(''); return; }
-    void window.history.projects().then((list) => {
+    void window.lensHistory.projects().then((list) => {
       setProjects(list);
       setProjectId((cur) => cur || list[0]?.id || '');
     });
@@ -77,7 +77,7 @@ export function App() {
       const got = await window.lens.run(AA);
       setResult(got);
       // 이력이 쌓여야 대조가 되므로 검사와 저장을 한 동작으로 묶는다
-      if (projectId) await window.history.save({ projectId, url, opts: AA, result: got });
+      if (projectId) await window.lensHistory.save({ projectId, url, opts: AA, result: got });
     } finally {
       setBusy(false);
     }
@@ -85,14 +85,14 @@ export function App() {
 
   async function compare() {
     if (!projectId) return;
-    setPair(await window.history.lastTwo({ projectId, url }));
+    setPair(await window.lensHistory.lastTwo({ projectId, url }));
   }
 
   async function newProject() {
     const name = window.prompt('프로젝트 이름 (외주사 · 사이트 단위)');
     if (!name) return;
-    const id = await window.history.addProject(name);
-    setProjects(await window.history.projects());
+    const id = await window.lensHistory.addProject(name);
+    setProjects(await window.lensHistory.projects());
     setProjectId(id);
   }
 

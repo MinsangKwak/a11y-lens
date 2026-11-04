@@ -31,4 +31,6 @@ const history = {
 
 contextBridge.exposeInMainWorld('lens', lens);
 contextBridge.exposeInMainWorld('auth', auth);
-contextBridge.exposeInMainWorld('history', history);
+// history 라는 이름은 쓸 수 없다 — 브라우저 내장 window.history 를 가린다.
+// 가리면 내장 History API 가 사라지고, d.ts 의 전역 선언도 내장 타입에 밀려 적용되지 않는다
+contextBridge.exposeInMainWorld('lensHistory', history);
