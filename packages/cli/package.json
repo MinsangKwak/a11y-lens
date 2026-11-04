@@ -2,12 +2,17 @@
   "name": "@a11y-lens/cli",
   "version": "0.1.0",
   "type": "module",
-  "bin": { "a11y-lens": "./dist/index.js" },
+  "bin": {
+    "a11y-lens": "./dist/index.js"
+  },
   "scripts": {
     "build": "tsc -p .",
     "typecheck": "tsc -p . --noEmit",
     "start": "node dist/index.js",
     "test": "echo 'core 가 검증한다 — 여기는 셸일 뿐이다'"
   },
-  "dependencies": { "@a11y-lens/core": "workspace:*" }
+  "dependencies": {
+    "@a11y-lens/core": "workspace:*",
+    "axe-core": "^4.14.0"
+  }
 }
