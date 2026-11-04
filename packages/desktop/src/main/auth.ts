@@ -48,7 +48,14 @@ const vault = {
   },
 };
 
-export const db = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
+// electron-vite 는 .env 를 process.env 에 넣지 않는다 — MAIN_VITE_ 접두사가 붙은 것만
+// 메인 프로세스의 import.meta.env 로 넘긴다. 접두사를 빼면 값이 undefined 로 들어와
+// 로그인 첫 호출에서 터진다
+const URL_ = import.meta.env.MAIN_VITE_SUPABASE_URL;
+const KEY_ = import.meta.env.MAIN_VITE_SUPABASE_ANON_KEY;
+if (!URL_ || !KEY_) throw new Error('.env 에 MAIN_VITE_SUPABASE_URL · MAIN_VITE_SUPABASE_ANON_KEY 가 필요합니다');
+
+export const db = createClient(URL_, KEY_, {
   auth: {
     storage: vault,
     persistSession: true,

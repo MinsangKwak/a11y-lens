@@ -120,7 +120,7 @@ OAuth 창은 시스템 브라우저로 엽니다. 앱 안의 창으로 열면 Go
 
 ```bash
 pnpm install
-cp .env.example .env          # Supabase 주소 · anon 키
+cp .env.example .env          # Supabase 주소 · 공개 키 (MAIN_VITE_ 접두사 필요)
 psql "$DATABASE_URL" -f db/schema.sql
 
 pnpm test                          # core 엔진 검증 (13건)
