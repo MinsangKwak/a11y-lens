@@ -1,7 +1,9 @@
 'use strict';
 export { AUDIT } from './audit.js';
+export { AXE_RULES, AXE_SKIPPED, RUN_AXE, toIssues, diffIssues } from './axe.js';
 export { diff } from './diff.js';
-export type { AuditOptions, AuditResult, Finding, Verdict } from './types.js';
+export type { AuditOptions, AuditResult, Finding, Verdict, Impact, Issue, AxeResult } from './types.js';
+export type { AxeRule, AxeOptions, IssueDiff } from './axe.js';
 export type { Diff, Remaining } from './diff.js';
 
 /** WCAG 2.1 AA — 외주 검수의 기본값 */

@@ -49,3 +49,40 @@ export interface AuditResult {
   /** 글자를 가진 요소를 몇 개 훑었는지 — 검사 범위를 보고서에 적기 위해 */
   scanned: number;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 접근성 규칙(axe 어댑터)이 주고받는 모양. 명암비와 어휘를 맞춘다 —
+// 보고서에 두 결과가 나란히 들어가므로 verdict 의 뜻이 서로 달라지면 안 된다.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** axe 가 매긴 심각도. 우선순위를 매길 때 쓴다 */
+export type Impact = 'minor' | 'moderate' | 'serious' | 'critical';
+
+/** 접근성 위반 한 건. 외주사가 이것만 보고 그 자리를 고칠 수 있어야 한다 */
+export interface Issue {
+  /** axe 규칙 ID. 이력 대조의 열쇠 절반이다 */
+  rule: string;
+  /** 명암비 쪽 Verdict 와 같은 뜻 — undeterminable 은 사람이 봐야 하는 자리다 */
+  verdict: Verdict;
+  impact: Impact;
+  /** 무엇이 잘못됐는지 한 줄. 보고서에 그대로 나간다 */
+  what: string;
+  /** axe 의 영문 설명과 문서 주소 — 근거를 되짚을 길을 남긴다 */
+  help: string;
+  helpUrl: string;
+  /** 그 요소를 다시 찾을 경로. 프레임 안이면 ' → ' 로 이어 붙는다 */
+  selector: string;
+  /** 증거로 인용할 HTML 조각 */
+  html: string;
+  /** axe 가 적은 실패 사유 */
+  reason: string;
+}
+
+export interface AxeResult {
+  /** 기준 미달 — 수정 요청 대상 */
+  issues: Issue[];
+  /** 판단할 수 없어 사람에게 넘기는 자리 */
+  review: Issue[];
+  /** 검사 범위를 보고서에 적기 위한 수치 */
+  rules: { tested: number; passed: number; violated: number };
+}
