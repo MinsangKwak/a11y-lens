@@ -1,0 +1,29 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>명암비 고정 사례</title>
+<style>
+  body { background: #fff; font-family: sans-serif; margin: 0; padding: 8px; }
+  p, h1 { margin: 0 0 6px; font-size: 16px; font-weight: 400; }
+</style>
+<body>
+  <!-- 4.54 — 기준 4.5 를 간신히 넘는다. 걸리면 오검출 -->
+  <p id="pass" style="color:#767676">통과하는 본문</p>
+  <!-- 4.48 — 색 값 하나 차이로 기준 아래. 못 잡으면 미검출 -->
+  <p id="fail" style="color:#777777">미달인 본문</p>
+  <!-- 3.03 — 24px 이라 큰 글씨 기준 3.0 적용, 통과 -->
+  <h1 id="large-pass" style="color:#949494;font-size:24px">큰 글씨 제목</h1>
+  <!-- 같은 색인데 16px — 본문 기준 4.5 적용, 미달 -->
+  <p id="large-as-normal" style="color:#949494">작은 회색 본문</p>
+  <!-- 19px 굵게 — 굵은 큰 글씨 기준 적용, 통과 -->
+  <p id="bold-large" style="color:#949494;font-size:19px;font-weight:700">굵은 중간 글씨</p>
+  <!-- 그림 위 글자 — 잴 수 없음으로 분류돼야 한다 -->
+  <div id="onimage" style="background-image:linear-gradient(#000,#fff);color:#888">그림 위 글자</div>
+  <!-- 투명 div 를 거쳐 어두운 바탕 — 흰 글자가 통과해야 한다 (흰색으로 가정하면 전부 오검출) -->
+  <div style="background:#222">
+    <div style="background:transparent"><p id="dark" style="color:#fff">어두운 바탕 흰 글자</p></div>
+  </div>
+  <!-- 부모 opacity 0.3 — 검은 글자가 실질적으로 흐려져 미달 -->
+  <div style="opacity:.3"><p id="faded" style="color:#000">흐려진 글자</p></div>
+  <!-- 합의된 예외 색 — allowed 로 분류돼야 한다 -->
+  <p id="allowed" style="color:#a8b820">예외로 합의된 색</p>
+</body>
