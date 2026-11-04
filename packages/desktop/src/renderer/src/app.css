@@ -1,0 +1,154 @@
+/* 간격은 4px 배수, 조작 영역은 최소 44px */
+:root {
+  --bg: #16181d;
+  --fg: #e7e9ee;
+  --dim: #9aa0ab;
+  --line: #2b2f37;
+  --fail: #ff5c5c;
+  --unknown: #f0b429;
+  --allowed: #7a8290;
+  --tap: 44px;
+  --r-box: 8px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 14px/1.5 -apple-system, "Pretendard", system-ui, sans-serif;
+}
+
+.app { display: grid; grid-template-columns: 420px 1fr; height: 100vh; }
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  overflow-y: auto;
+  border-right: 1px solid var(--line);
+}
+
+/* 대상 뷰가 겹쳐 서는 자리 — 바탕만 둔다 */
+.stage { background: #0d0f12; }
+
+.bar { display: flex; gap: 8px; }
+.bar input {
+  flex: 1;
+  min-height: var(--tap);
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-box);
+  background: #1d2026;
+  color: var(--fg);
+}
+.bar button, .run, .tabs button {
+  min-height: var(--tap);
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-box);
+  background: #22262e;
+  color: var(--fg);
+  cursor: pointer;
+}
+.run:disabled { opacity: .5; cursor: default; }
+
+.scanned { margin: 0; color: var(--dim); font-size: 12px; }
+
+.tabs { display: flex; gap: 4px; }
+.tabs button { flex: 1; padding: 0 8px; font-size: 12px; }
+.tabs button.on { border-color: var(--fg); }
+
+.findings { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.finding button {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--allowed);
+  border-radius: var(--r-box);
+  background: #1b1e24;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.finding.fail button { border-left-color: var(--fail); }
+.finding.undeterminable button { border-left-color: var(--unknown); }
+
+.head { display: flex; align-items: center; gap: 8px; }
+.head b { font-size: 15px; }
+.head em {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #2b2f37;
+  color: var(--dim);
+  font-size: 11px;
+  font-style: normal;
+}
+.text { color: var(--fg); }
+.meta, .swatch { color: var(--dim); font-size: 11px; word-break: break-all; }
+.swatch { display: flex; align-items: center; gap: 4px; }
+.swatch i { width: 12px; height: 12px; border: 1px solid var(--line); border-radius: 2px; }
+
+.empty { color: var(--dim); }
+.shot { margin: 0; }
+.shot img { max-width: 100%; border: 1px solid var(--line); border-radius: var(--r-box); }
+.shot figcaption { color: var(--dim); font-size: 11px; }
+
+/* ── 로그인 화면 ─────────────────────────────────────────────────────────── */
+.gate {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 96px 24px;
+}
+.gate h1 { margin: 0; font-size: 28px; }
+.gate .lead { margin: 0; font-size: 16px; }
+.gate .why, .gate .note { margin: 0; color: var(--dim); font-size: 13px; line-height: 1.7; }
+.gate .why b { color: var(--fg); }
+.providers { display: flex; flex-direction: column; gap: 8px; }
+.providers button {
+  min-height: var(--tap);
+  border: 1px solid var(--line);
+  border-radius: var(--r-box);
+  background: #22262e;
+  color: var(--fg);
+  cursor: pointer;
+}
+.providers button:disabled { opacity: .5; cursor: default; }
+
+/* ── 계정 머리줄 ─────────────────────────────────────────────────────────── */
+.me { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.me span { overflow: hidden; color: var(--dim); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.me button { padding: 4px 8px; border: 1px solid var(--line); border-radius: var(--r-box); background: none; color: var(--dim); cursor: pointer; }
+
+.bar select {
+  flex: 1;
+  min-height: var(--tap);
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-box);
+  background: #1d2026;
+  color: var(--fg);
+}
+
+/* ── 대조 결과 ───────────────────────────────────────────────────────────── */
+.compare {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-box);
+  background: #1b1e24;
+}
+.compare .headline { margin: 0 0 4px; font-size: 15px; }
+.compare .headline b { color: var(--fg); }
+.compare .when { margin: 0 0 8px; color: var(--dim); font-size: 11px; }
+.compare details { margin-top: 8px; }
+.compare summary { cursor: pointer; font-size: 13px; }
+.compare ul { margin: 4px 0 0; padding-left: 16px; color: var(--dim); font-size: 12px; }
+.compare em { color: var(--unknown); font-style: normal; }
