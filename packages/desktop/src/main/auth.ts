@@ -14,7 +14,7 @@
 
 import { app, shell, safeStorage } from 'electron';
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { createClient, type Session } from '@supabase/supabase-js';
 
 const SCHEME = 'a11ylens';
@@ -103,7 +103,14 @@ export async function finish(url: string): Promise<void> {
 
 /** 운영체제마다 콜백이 들어오는 길이 다르다 */
 export function registerScheme(onUrl: (url: string) => void): void {
-  app.setAsDefaultProtocolClient(SCHEME);
+  // 개발 모드에서는 실행 파일이 electron 바이너리 자체라 스킴만 등록하면 길이 끊긴다 —
+  // 운영체제가 앱을 어떤 인자로 다시 띄울지 함께 알려 줘야 로그인이 돌아올 자리가 생긴다.
+  // 이게 없으면 브라우저 로그인은 성공하는데 앱으로 돌아오지 않는다
+  if (process.defaultApp && process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient(SCHEME, process.execPath, [resolve(process.argv[1])]);
+  } else {
+    app.setAsDefaultProtocolClient(SCHEME);
+  }
   // macOS
   app.on('open-url', (event, url) => { event.preventDefault(); onUrl(url); });
   // Windows · Linux 는 두 번째 실행의 argv 로 들어온다
