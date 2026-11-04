@@ -6,7 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { diff, type Finding } from '@a11y-lens/core';
-import type { Snapshot } from '../../preload/index.js';
+import type { Snapshot } from '../../preload/api.js';
 
 const when = (iso: string) => new Date(iso).toLocaleString('ko-KR');
 
