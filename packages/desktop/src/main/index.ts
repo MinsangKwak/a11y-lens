@@ -22,8 +22,10 @@ const here = dirname(fileURLToPath(import.meta.url));
 let inspector: Inspector | null = null;
 let win: BrowserWindow | null = null;
 
-// 커스텀 스킴 콜백이 두 번째 실행으로 들어오므로 단일 인스턴스를 잡아야 한다
-if (!app.requestSingleInstanceLock()) app.quit();
+// 커스텀 스킴 콜백이 두 번째 실행으로 들어오므로 단일 인스턴스를 잡아야 한다.
+// quit 이 아니라 exit 인 이유 — quit 은 즉시 끝나지 않아 아래 코드가 마저 돌고,
+// 로그인 콜백으로 뜬 두 번째 실행이 빈 창을 하나 더 띄운다
+if (!app.requestSingleInstanceLock()) app.exit(0);
 
 function createWindow(): void {
   win = new BrowserWindow({
