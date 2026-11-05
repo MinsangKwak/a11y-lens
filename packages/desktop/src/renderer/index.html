@@ -3,10 +3,17 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
     <title>a11y-lens</title>
+    <link rel="stylesheet" href="/src/app.css" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="gate" role="status" aria-live="polite">
+        <h1>a11y-lens</h1>
+        <p class="lead">확인 중…</p>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
