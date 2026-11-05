@@ -56,8 +56,19 @@ const axeOpts: AxeOptions = {
 };
 const axeIds = axeOpts.rules?.length ? axeOpts.rules : AXE_RULES.map((r) => r.id);
 
-/** 빈 결과. 주입이 막힌 페이지에서도 명암비 결과는 내보내야 한다 */
-const NO_AXE: AxeResult = { issues: [], review: [], rules: { tested: 0, passed: 0, violated: 0 } };
+// 실행하지 못한 검사를 빈 통과 결과와 구별한다. 명암비만 끝난 경우도 보고서에 남긴다.
+type ScanStage = 'navigation' | 'contrast' | 'axe';
+interface PageReport {
+  url: string;
+  findings: Finding[];
+  scanned: number;
+  axe: AxeResult | null;
+  status: 'complete' | 'partial' | 'failed';
+  errors: { stage: ScanStage; message: string }[];
+}
+
+const errorMessage = (error: unknown): string =>
+  (error instanceof Error ? error.message : String(error)).split('\n')[0];
 
 /** 심각한 것부터 보여 주려는 가중치 */
 const WEIGHT: Record<string, number> = { critical: 3, serious: 2, moderate: 1, minor: 0 };
@@ -66,17 +77,20 @@ const WEIGHT: Record<string, number> = { critical: 3, serious: 2, moderate: 1, m
 const rule = (i: Issue): string => `  [${i.impact}] ${i.what} · ${i.selector} · ${i.rule}`;
 
 const browser = await chromium.launch();
-const report: { url: string; findings: Finding[]; scanned: number; axe: AxeResult }[] = [];
+const report: PageReport[] = [];
 
 for (const url of urls) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  let stage: ScanStage = 'navigation';
   try {
     await page.goto(url, { waitUntil: 'networkidle', timeout: 30_000 });
     // content-visibility:auto 로 건너뛴 자리도 전부 켜서 잰다
     await page.addStyleTag({ content: '* { content-visibility: visible !important; }' }).catch(() => {});
+    stage = 'contrast';
     const result = await page.evaluate(AUDIT, opts);
 
-    let axe = NO_AXE;
+    let axe: AxeResult | null = null;
+    const errors: PageReport['errors'] = [];
     if (useAxe) {
       try {
         // addScriptTag 가 아니라 evaluate 로 넣는다 — 대상 페이지의 CSP 가 script 태그를 막는다
@@ -84,13 +98,15 @@ for (const url of urls) {
         axe = toIssues(await page.evaluate(RUN_AXE, axeIds), axeOpts);
       } catch (error) {
         // 규칙 검사만 실패해도 명암비 결과는 살린다. 둘은 서로의 전제가 아니다
-        console.error(`접근성 규칙을 돌리지 못함 · ${url} → ${(error as Error).message.split('\n')[0]}`);
+        errors.push({ stage: 'axe', message: errorMessage(error) });
+        console.error(`접근성 규칙을 돌리지 못함 · ${url} → ${errorMessage(error)}`);
       }
     }
-    report.push({ url, ...result, axe });
+    report.push({ url, ...result, axe, status: errors.length ? 'partial' : 'complete', errors });
   } catch (error) {
-    console.error(`열리지 않음 · ${url} → ${(error as Error).message.split('\n')[0]}`);
-    report.push({ url, findings: [], scanned: 0, axe: NO_AXE });
+    const message = errorMessage(error);
+    console.error(`검사 실패 (${stage}) · ${url} → ${message}`);
+    report.push({ url, findings: [], scanned: 0, axe: null, status: 'failed', errors: [{ stage, message }] });
   }
   await page.close();
 }
@@ -103,12 +119,14 @@ for (const page of report) {
   const allowed = page.findings.filter((f) => f.verdict === 'allowed');
   failed += fail.length;
 
-  const issues = page.axe.issues.filter((i) => i.verdict === 'fail');
-  const allowedRules = page.axe.issues.filter((i) => i.verdict === 'allowed');
+  const issues = (page.axe?.issues ?? []).filter((i) => i.verdict === 'fail');
+  const allowedRules = (page.axe?.issues ?? []).filter((i) => i.verdict === 'allowed');
   failed += issues.length;
 
-  const range = useAxe ? ` · 규칙 ${page.axe.rules.tested}개` : '';
+  const range = useAxe ? (page.axe ? ` · 규칙 ${page.axe.rules.tested}개` : ' · 규칙 검사 미완료') : '';
   console.log(`\n${page.url} — 훑은 글자 ${page.scanned}개 · 기준 ${opts.minNormal}/${opts.minLarge}${range}`);
+  if (page.status === 'failed') console.log('검사 실패 — 이 페이지는 통과로 판단할 수 없습니다');
+  if (page.status === 'partial') console.log('검사 일부 실패 — 명암비 결과만 확인할 수 있습니다');
   if (fail.length) {
     console.log(`기준 미달 ${fail.length}건:`);
     for (const f of fail) console.log(line(f));
@@ -119,19 +137,19 @@ for (const page of report) {
     for (const f of unknown) console.log(line(f));
   }
   if (allowed.length) console.log(`합의된 예외 ${allowed.length}건 (고치지 않는다)`);
-  if (!page.findings.length) console.log('기준 아래로 떨어지는 글자 없음 ✅');
+  if (page.status !== 'failed' && !page.findings.length) console.log('기준 아래로 떨어지는 글자 없음 ✅');
 
   if (issues.length) {
     // 심각한 것부터 — 외주사는 목록 위에서부터 고친다
     console.log(`접근성 위반 ${issues.length}건:`);
     for (const i of [...issues].sort((a, b) => WEIGHT[b.impact] - WEIGHT[a.impact])) console.log(rule(i));
   }
-  if (page.axe.review.length) {
+  if (page.axe?.review.length) {
     console.log(`사람이 볼 자리 ${page.axe.review.length}건 (규칙으로 판단 불가):`);
     for (const i of page.axe.review) console.log(rule(i));
   }
   if (allowedRules.length) console.log(`합의된 예외 ${allowedRules.length}건 (규칙, 고치지 않는다)`);
-  if (useAxe && !page.axe.issues.length && !page.axe.review.length) console.log('켠 규칙에 걸리는 자리 없음 ✅');
+  if (page.axe && !page.axe.issues.length && !page.axe.review.length) console.log('켠 규칙에 걸리는 자리 없음 ✅');
 }
 
 const out = flag('json');
@@ -142,5 +160,5 @@ if (out) {
   console.log(`\n${out} 에 적었다`);
 }
 
-// CI 에서 쓰려면 미달이 있을 때 실패해야 한다
-process.exit(failed > 0 ? 1 : 0);
+// 검사 실행 실패를 위반 발견과 구별한다. 일부 URL 이 통과해도 미완료 검사를 숨기지 않는다
+process.exit(report.some((page) => page.errors.length > 0) ? 2 : failed > 0 ? 1 : 0);
