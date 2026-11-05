@@ -30,12 +30,14 @@ jobs:
         # frozen 이라야 lockfile 이 뜻을 가진다 — 빠지면 CI 가 매번 다른 버전을 깐다
         run: pnpm install --frozen-lockfile
 
+      # 빌드가 먼저다. core 는 dist/index.d.ts 를 타입으로 내보내므로,
+      # 빌드 전에는 cli·desktop 의 타입 검사가 @a11y-lens/core 를 찾지 못한다.
+      # 손에서는 앞선 작업의 dist 가 남아 통과해 버리는 자리라 CI 에서만 드러난다
+      - name: 빌드
+        run: pnpm -r build
+
       - name: 타입 검사
         run: pnpm typecheck
 
       - name: 테스트
         run: pnpm test
-
-      # 번들이 깨지는 자리는 여기서만 드러난다. 타입 검사와 테스트는 통과해도 빌드는 깨질 수 있다
-      - name: 빌드
-        run: pnpm -r build
