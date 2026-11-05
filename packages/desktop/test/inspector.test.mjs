@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
 import ts from 'typescript';
@@ -65,7 +65,7 @@ function appHarness({ failAxe = false } = {}) {
     const module = { exports: {} };
     cache.set(path, module);
     // CJS 테스트 로더에서도 원래 소스의 파일 위치를 보존한다.
-    const source = readFileSync(path, 'utf8').replaceAll('import.meta.url', JSON.stringify(new URL('file://' + path).href));
+    const source = readFileSync(path, 'utf8').replaceAll('import.meta.url', JSON.stringify(pathToFileURL(path).href));
     const compiled = ts.transpileModule(source, {
       compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, esModuleInterop: true },
       fileName: path,
