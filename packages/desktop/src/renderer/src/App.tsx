@@ -16,6 +16,7 @@ import type { Project, Snapshot, Who } from '../../preload/api.js';
 import { Findings, LABEL } from './Findings.js';
 import { Compare } from './Compare.js';
 import { Gate } from './Gate.js';
+import { observeTargetBounds } from './targetBounds.js';
 
 const AA = { minNormal: 4.5, minLarge: 3.0, allowedColors: [] as string[] };
 const TABS: Verdict[] = ['fail', 'undeterminable', 'allowed'];
@@ -51,20 +52,19 @@ export function App() {
   // 대상 뷰의 자리를 알려 준다. 로그인 전에는 0 으로 접어 게이트를 덮지 않게 한다
   useEffect(() => {
     const el = stage.current;
-    const tell = () => {
-      if (!el || !me) { void window.lens.setBounds({ x: 0, y: 0, width: 0, height: 0 }); return; }
-      const r = el.getBoundingClientRect();
-      void window.lens.setBounds({ x: r.x, y: r.y, width: r.width, height: r.height });
-    };
-    tell();
-    if (!el) return;
-    const ro = new ResizeObserver(tell);
-    ro.observe(el);
-    window.addEventListener('resize', tell);
-    return () => { ro.disconnect(); window.removeEventListener('resize', tell); };
+    if (!el || !me) {
+      void window.lens.setBounds({ x: 0, y: 0, width: 0, height: 0 });
+      return;
+    }
+    return observeTargetBounds(el, (bounds) => void window.lens.setBounds(bounds));
   }, [me]);
 
-  if (me === undefined) return <div className="gate"><p className="lead">확인 중…</p></div>;
+  if (me === undefined) return (
+    <div className="gate" role="status" aria-live="polite">
+      <h1>a11y-lens</h1>
+      <p className="lead">확인 중…</p>
+    </div>
+  );
   if (me === null) return <Gate />;
 
   async function open() {
@@ -139,15 +139,15 @@ export function App() {
         </header>
 
         <div className="bar">
-          <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+          <select aria-label="프로젝트" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
             {!projects.length && <option value="">프로젝트 없음</option>}
             {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
-          <button type="button" onClick={() => void newProject()}>＋</button>
+          <button type="button" aria-label="프로젝트 추가" onClick={() => void newProject()}>＋</button>
         </div>
 
-        <form className="bar" onSubmit={(e) => { e.preventDefault(); void open(); }}>
-          <input disabled={busy} value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com" />
+        <form className="bar" noValidate onSubmit={(e) => { e.preventDefault(); void open(); }}>
+          <input aria-label="검사할 URL" disabled={busy} value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com" />
           <button type="submit" disabled={busy}>열기</button>
         </form>
 
