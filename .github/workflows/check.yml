@@ -47,3 +47,6 @@ jobs:
 
       - name: 테스트
         run: pnpm test
+
+      - name: 초기 렌더링 회귀
+        run: pnpm --filter @a11y-lens/desktop test:render
