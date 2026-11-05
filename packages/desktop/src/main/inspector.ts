@@ -14,6 +14,7 @@ import {
 } from '@a11y-lens/core';
 // 규칙 엔진은 셸이 들고 있다 — core 는 의존성 0 을 지켜야 하므로 라이브러리를 품지 않는다
 import axe from 'axe-core';
+import { runScan, type ScanResult } from '../shared/scan.js';
 
 // 격리 월드 번호. 0 은 페이지의 메인 월드이고 낮은 번호는 Electron · 확장이 쓴다 —
 // 충돌하면 주입이 조용히 실패하므로 넉넉히 떨어진 값을 쓴다
@@ -37,6 +38,10 @@ export class Inspector {
 
   async go(url: string): Promise<void> {
     await this.view.webContents.loadURL(url);
+  }
+
+  async scan(opts: AuditOptions): Promise<ScanResult> {
+    return runScan(this, opts);
   }
 
   /** 엔진을 페이지 안에서 돌린다. 페이지 CSP 가 주입을 막아도 격리 월드는 통과한다 */
