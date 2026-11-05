@@ -9,7 +9,7 @@
     "build": "tsc -p .",
     "typecheck": "tsc -p . --noEmit",
     "start": "node dist/index.js",
-    "test": "echo 'core 가 검증한다 — 여기는 셸일 뿐이다'"
+    "test": "npm run build && node --test test/*.test.mjs"
   },
   "dependencies": {
     "@a11y-lens/core": "workspace:*",
