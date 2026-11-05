@@ -1,0 +1,72 @@
+{
+  "profile": {
+    "downloadKbps": 400,
+    "uploadKbps": 400,
+    "latencyMs": 400,
+    "cpuSlowdown": 4,
+    "cache": false
+  },
+  "browser": "153.0.8010.0",
+  "runs": [
+    {
+      "repeat": 1,
+      "version": "before",
+      "readyMs": 14407.800000000745,
+      "fcpMs": 14392,
+      "cls": 0,
+      "resourceBytes": 665323
+    },
+    {
+      "repeat": 1,
+      "version": "after",
+      "readyMs": 6047.70000000298,
+      "fcpMs": 1060,
+      "cls": 0,
+      "resourceBytes": 237457
+    },
+    {
+      "repeat": 2,
+      "version": "before",
+      "readyMs": 14713.800000000745,
+      "fcpMs": 14500,
+      "cls": 0,
+      "resourceBytes": 665323
+    },
+    {
+      "repeat": 2,
+      "version": "after",
+      "readyMs": 6197.300000000745,
+      "fcpMs": 1124,
+      "cls": 0,
+      "resourceBytes": 237457
+    },
+    {
+      "repeat": 3,
+      "version": "before",
+      "readyMs": 15197.70000000298,
+      "fcpMs": 14680,
+      "cls": 0,
+      "resourceBytes": 665323
+    },
+    {
+      "repeat": 3,
+      "version": "after",
+      "readyMs": 5930.5,
+      "fcpMs": 1036,
+      "cls": 0,
+      "resourceBytes": 237457
+    }
+  ],
+  "baselineCommit": "0ab0e7e4936fc2a7fb2e3ace27a734df87cacbb6",
+  "bundleBytes": {
+    "before": {
+      "javascript": 659851,
+      "css": 5472
+    },
+    "after": {
+      "javascript": 233600,
+      "css": 3857
+    }
+  },
+  "scope": "Electron 렌더러의 HTTP 재현, 브리지 모의 객체, 압축 전송 없이 동일한 3G·CPU 조건. 실제 Electron 창과 OAuth는 별도 확인이 필요함."
+}
