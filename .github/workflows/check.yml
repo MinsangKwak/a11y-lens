@@ -39,5 +39,11 @@ jobs:
       - name: 타입 검사
         run: pnpm typecheck
 
+      # 명암비 엔진은 실제 브라우저 안에서 돈다 — contrast 테스트가 chromium 을 띄운다.
+      # playwright 버전은 package.json 에 핀해 두었다. 범위로 두면 러너가 받는 바이너리의
+      # 리비전이 어긋나 Executable doesn't exist 로 터진다
+      - name: 브라우저 설치
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: 테스트
         run: pnpm test
