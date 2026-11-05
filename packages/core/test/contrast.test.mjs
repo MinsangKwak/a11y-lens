@@ -9,10 +9,14 @@ import test from 'node:test';
 import { pathToFileURL } from 'node:url';
 import { AUDIT, AA } from '../dist/index.js';
 
-const pw = await import(process.env.PLAYWRIGHT_MODULE || '/opt/node22/lib/node_modules/playwright/index.js');
+// 작업 공간이 설치한 playwright 를 쓴다. 특정 기기의 절대 경로를 적으면
+// 그 기기에서만 도는 테스트가 된다 — CI 에서 ERR_MODULE_NOT_FOUND 로 터진 자리다.
+// PLAYWRIGHT_MODULE 은 러너가 다른 곳에 설치한 경우를 위해 남긴다
+const pw = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const chromium = (pw.default ?? pw).chromium;
 const url = pathToFileURL(new URL('./fixtures/contrast.html', import.meta.url).pathname).href;
 
-const browser = await pw.default.chromium.launch();
+const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 900, height: 1200 } });
 await page.goto(url);
 const result = await page.evaluate(AUDIT, { ...AA, allowedColors: ['#a8b820'] });
