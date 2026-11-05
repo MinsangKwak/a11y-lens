@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": [
+      "ES2022"
+    ],
+    "types": [
+      "node"
+    ],
+    "rootDir": "src/shared",
+    "outDir": "out/test"
+  },
+  "include": [
+    "src/shared/scan.ts"
+  ]
+}
