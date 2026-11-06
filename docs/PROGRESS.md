@@ -90,4 +90,4 @@ GUI를 사용하지 않는 설치·검증 환경에서는 `ELECTRON_SKIP_BINARY_
 
 존재하지 않던 `docs/screenshot.png` 참조를 저장소의 [구조 설명도](assets/architecture.png)로 교체했습니다. [검증 요약도](assets/verification.png)는 PR별 실측과 검증 수를 구분합니다. 두 그림 모두 코드·검증 기록을 설명하는 자료이며 실제 앱 스크린샷이 아닙니다.
 
-공개 저장소의 Topics는 설정되어 있어 이전의 미설정 할 일에서 제외했습니다.
+공개 저장소의 Topics는 설정되어 있어 이전의 미설정 할 일에서 제외했습니다. 브랜치 보호는 아직 미적용이며 [적용안과 확인 조건](BRANCH_PROTECTION.md)을 정리했습니다. 로그인한 관리 화면에서 실제 적용 후 상태를 갱신해야 합니다.
