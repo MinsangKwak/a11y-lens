@@ -9,11 +9,14 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useRef, useState } from 'react';
-import type { AuditResult, Finding, Verdict } from '@a11y-lens/core';
+import type { Finding, Verdict } from '@a11y-lens/core';
+import { contrastOnly, type ScanResult } from '../../shared/scan.js';
+import { AxeFindings } from './AxeFindings.js';
 import type { Project, Snapshot, Who } from '../../preload/api.js';
 import { Findings, LABEL } from './Findings.js';
 import { Compare } from './Compare.js';
 import { Gate } from './Gate.js';
+import { observeTargetBounds } from './targetBounds.js';
 
 const AA = { minNormal: 4.5, minLarge: 3.0, allowedColors: [] as string[] };
 const TABS: Verdict[] = ['fail', 'undeterminable', 'allowed'];
@@ -24,7 +27,8 @@ export function App() {
   const stage = useRef<HTMLDivElement>(null);
   const [url, setUrl] = useState('https://');
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<AuditResult | null>(null);
+  const [result, setResult] = useState<ScanResult | null>(null);
+  const [error, setError] = useState('');
   const [tab, setTab] = useState<Verdict>('fail');
   const [shot, setShot] = useState<string | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -48,36 +52,57 @@ export function App() {
   // 대상 뷰의 자리를 알려 준다. 로그인 전에는 0 으로 접어 게이트를 덮지 않게 한다
   useEffect(() => {
     const el = stage.current;
-    const tell = () => {
-      if (!el || !me) { void window.lens.setBounds({ x: 0, y: 0, width: 0, height: 0 }); return; }
-      const r = el.getBoundingClientRect();
-      void window.lens.setBounds({ x: r.x, y: r.y, width: r.width, height: r.height });
-    };
-    tell();
-    if (!el) return;
-    const ro = new ResizeObserver(tell);
-    ro.observe(el);
-    window.addEventListener('resize', tell);
-    return () => { ro.disconnect(); window.removeEventListener('resize', tell); };
+    if (!el || !me) {
+      void window.lens.setBounds({ x: 0, y: 0, width: 0, height: 0 });
+      return;
+    }
+    return observeTargetBounds(el, (bounds) => void window.lens.setBounds(bounds));
   }, [me]);
 
-  if (me === undefined) return <div className="gate"><p className="lead">확인 중…</p></div>;
+  if (me === undefined) return (
+    <div className="gate" role="status" aria-live="polite">
+      <h1>a11y-lens</h1>
+      <p className="lead">확인 중…</p>
+    </div>
+  );
   if (me === null) return <Gate />;
 
   async function open() {
+    if (busy) return;
+    setBusy(true);
     setResult(null);
     setShot(null);
     setPair(null);
-    await window.lens.navigate(url);
+    setError('');
+    try {
+      await window.lens.navigate(url);
+    } catch (cause) {
+      setError(`페이지를 열지 못했습니다: ${cause instanceof Error ? cause.message : String(cause)}`);
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function run() {
+    if (busy) return;
     setBusy(true);
+    setResult(null);
+    setShot(null);
+    setPair(null);
+    setError('');
     try {
       const got = await window.lens.run(AA);
       setResult(got);
-      // 이력이 쌓여야 대조가 되므로 검사와 저장을 한 동작으로 묶는다
-      if (projectId) await window.lensHistory.save({ projectId, url, opts: AA, result: got });
+      // 접근성 결과는 화면에만 표시한다. 이력은 기존 명암비 검사 범위로 유지한다.
+      if (projectId) {
+        try {
+          await window.lensHistory.save({ projectId, url, opts: AA, result: contrastOnly(got) });
+        } catch (cause) {
+          setError(`검사는 완료했지만 명암비 이력을 저장하지 못했습니다: ${cause instanceof Error ? cause.message : String(cause)}`);
+        }
+      }
+    } catch (cause) {
+      setError(`검사를 완료하지 못했습니다: ${cause instanceof Error ? cause.message : String(cause)}`);
     } finally {
       setBusy(false);
     }
@@ -114,29 +139,31 @@ export function App() {
         </header>
 
         <div className="bar">
-          <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+          <select aria-label="프로젝트" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
             {!projects.length && <option value="">프로젝트 없음</option>}
             {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
-          <button type="button" onClick={() => void newProject()}>＋</button>
+          <button type="button" aria-label="프로젝트 추가" onClick={() => void newProject()}>＋</button>
         </div>
 
-        <form className="bar" onSubmit={(e) => { e.preventDefault(); void open(); }}>
-          <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com" />
-          <button type="submit">열기</button>
+        <form className="bar" noValidate onSubmit={(e) => { e.preventDefault(); void open(); }}>
+          <input aria-label="검사할 URL" disabled={busy} value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com" />
+          <button type="submit" disabled={busy}>열기</button>
         </form>
 
         <div className="bar">
           <button type="button" className="run" onClick={() => void run()} disabled={busy}>
             {busy ? '검사 중…' : '이 화면 검사'}
           </button>
-          <button type="button" onClick={() => void compare()} disabled={!projectId}>지난번과 대조</button>
+          <button type="button" onClick={() => void compare()} disabled={!projectId || busy}>지난 명암비와 대조</button>
         </div>
 
+        {error && <p role="alert">{error}</p>}
         {pair && <Compare pair={pair} />}
 
         {result && (
           <>
+            <h2>명암비</h2>
             <p className="scanned">훑은 글자 {result.scanned}개 · 기준 {AA.minNormal} / {AA.minLarge}</p>
             <nav className="tabs">
               {TABS.map((v) => (
@@ -146,6 +173,8 @@ export function App() {
               ))}
             </nav>
             <Findings items={items} onPick={(f) => void pick(f)} />
+            <AxeFindings result={result.axe} />
+            <p className="scanned">이력 저장과 지난 검사 대조에는 명암비 결과만 포함됩니다.</p>
           </>
         )}
 
