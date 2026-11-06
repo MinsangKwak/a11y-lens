@@ -1,0 +1,8 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["packages/desktop/src/renderer"],
+  "locale": "ko-KR",
+  "canonicalMap": "DESIGN.md",
+  "requiredCapabilities": ["Select/Listbox"],
+  "ownership": { "Select/Listbox": "native" }
+}

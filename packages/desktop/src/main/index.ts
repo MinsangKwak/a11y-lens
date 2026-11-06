@@ -32,7 +32,8 @@ function createWindow(): void {
     width: 1440,
     height: 940,
     show: false,
-    webPreferences: { preload: join(here, '../preload/index.js'), sandbox: false },
+    backgroundColor: '#16181d',
+    webPreferences: { preload: join(here, '../preload/index.mjs'), sandbox: false },
   });
 
   inspector = new Inspector();
@@ -54,7 +55,10 @@ ipcMain.handle('target:bounds', (_e, b: { x: number; y: number; width: number; h
     width: Math.round(b.width), height: Math.round(b.height),
   });
 });
-ipcMain.handle('audit:run', (_e, opts: AuditOptions) => inspector?.audit(opts));
+ipcMain.handle('audit:run', (_e, opts: AuditOptions) => {
+  if (!inspector) throw new Error('검사 대상이 준비되지 않았습니다');
+  return inspector.scan(opts);
+});
 ipcMain.handle('audit:reveal', (_e, selector: string) => inspector?.reveal(selector));
 ipcMain.handle('audit:shot', (_e, rect: { x: number; y: number; w: number; h: number }) => inspector?.shot(rect));
 

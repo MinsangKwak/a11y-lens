@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "packageManager": "pnpm@12.16.1",
   "engines": {
     "node": ">=22"
   },
@@ -10,11 +11,14 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
+    "test:ci": "pnpm -r --parallel test:ci",
+    "verify": "pnpm build && pnpm typecheck && pnpm test:ci",
     "dev": "pnpm --filter @a11y-lens/desktop dev",
     "scan": "pnpm --filter @a11y-lens/cli start"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
+    "playwright": "1.63.0",
     "typescript": "^5.7.0"
   }
 }
