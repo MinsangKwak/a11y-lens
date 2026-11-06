@@ -1,133 +1,93 @@
 # 진행 상황과 다음 할 일
 
-> 새 세션이 이 문서부터 읽으면 맥락이 이어집니다. 작업 규칙은 [CLAUDE.md](../CLAUDE.md), 설계 배경은 [README](../README.md)에 있습니다.
->
-> 마지막 갱신: 2026-11-04
+마지막 갱신: **2026-11-06**. 저장소 코드·열린 PR·기존 CI 기록을 기준으로 정리했습니다.
 
-## 1. 이 프로젝트가 무엇인가
+[서비스와 설계 배경](../README.md) · [검증 기록](VALIDATION.md) · [작업 지침](../CLAUDE.md) · [Notion](https://app.notion.com/p/40fcbbdd109b8192bf4fcd1b6efac6f8)
 
-배포된 웹사이트의 **명암비와 웹 접근성을 검사하는 Electron 도구**입니다. 외주 산출물 검수가 쓰임새이고, 구직 포트폴리오를 겸합니다.
+## 프로젝트의 역할
 
-차별점은 **이력 대조** 하나입니다. 한 번 재서 목록을 내는 건 흔하지만, 1차·2차 검수를 대조해 "지적한 12건 중 9건 수정됨"을 자동으로 내는 도구는 드뭅니다.
+외주 산출물의 명암비와 웹 접근성 규칙을 검사하는 Electron·React 도구입니다. 동일한 판정 엔진을 CLI에서도 사용하며, 계정별 명암비 이력을 대조해 수정된 항목과 남은 항목을 구분합니다. 자동 접근성 인증을 대신하지 않습니다.
 
-## 2. 왜 이 형태인가
+## 브랜치별 반영 상태
 
-구현에 들어가기 전에 정한 것들입니다. 뒤집으려면 이유부터 확인하세요.
-
-| 선택 | 왜 |
+| 위치 | 상태 |
 | --- | --- |
-| 브라우저 익스텐션 → **데스크톱** | 익스텐션은 URL 목록 배치 실행과 이력 비교가 안 된다. 외주 검수의 본질이 그 둘이다 |
-| 웹 서비스 → **데스크톱** | 서버가 남의 사이트를 긁으면 부하·차단·책임이 운영자에게 온다. 로그인 상태 화면도 서버 크롤러는 못 간다 |
-| **Supabase** | 서버 운영이 없고 RLS 로 격리를 선언할 수 있다. 프론트엔드 직무를 지향해 백엔드 운영 부담을 줄였다 |
-| 로그인 게이트를 `if` 로 풀지 않음 | 데스크톱 분기는 우회된다. 이력과 보고서를 계정에 두어 로그인 없이는 쓸 이유가 없게 만들었다 |
+| `main` · `8c2daec` | 공통 엔진·CLI·데스크톱·계정·명암비 이력 구조, axe 어댑터. 실질 테스트는 core 22건 |
+| `dev` · `0ab0e7e` | 검사 실패 처리, 데스크톱 axe 결과 연결, CI·lockfile·회귀 검사 43건 |
+| [PR #6](https://github.com/MinsangKwak/a11y-lens/pull/6) · `d6ca648` | CI 중복 빌드·브라우저 다운로드 개선. 기존 43건 유지. `dev` 대상 초안, 미병합 |
+| [PR #7](https://github.com/MinsangKwak/a11y-lens/pull/7) · `69f0cb6` | 첫 화면·압축·배치 갱신 개선. 기존 43건과 추가 8건, 합계 51건. `dev` 대상 초안, 미병합 |
 
-## 3. 지금까지 된 것
+PR #6과 #7은 같은 `dev`에서 나뉜 독립 변경입니다. 각각 통과한 상태이며, 두 변경을 합친 상태의 검증은 병합 후 다시 확인해야 합니다. 별도 자동 배포 워크플로는 없습니다.
 
-### 저장소
+## 구현 범위
 
-`MinsangKwak/a11y-lens` · 공개 · 기본 브랜치 `main` · 워크플로 없음
+| 구성 | 완료된 코드 | 남은 확인·구현 |
+| --- | --- | --- |
+| `packages/core` | 명암비 판정·큰 글씨 기준·판단 불가·예외 처리, axe 규칙 60개 선별·정규화, 명암비 대조 | 지침 원문을 확인한 KWCAG 항목 매핑 |
+| `packages/cli` | Playwright URL 검사, JSON 보고서. `dev`에서 오류 단계·종료코드 2 지원 | 사람이 읽는 HTML 보고서 |
+| `packages/desktop` | Electron·React, 계정, 위치 표시·캡처·명암비 이력. `dev`에서 두 엔진 결과 연결 | 실제 Electron 창·로그인·검사·캡처·저장·대조 실행 |
+| `db/schema.sql` | `projects`·`scans`·`findings`, 계정별 RLS 정책 | 실제 환경 적용 여부·RLS·OAuth·계정 간 격리 확인 |
 
-```
-packages/core/      판정 엔진 + 이력 대조 · 의존성 0 · 테스트 13건
-packages/cli/       Playwright 배치 실행 · CI 종료코드
-packages/desktop/   Electron 셸 + React 렌더러 + 계정
-db/schema.sql       계정별 이력 3개 표 + RLS
-```
+axe 결과는 CLI 보고서와 `dev`의 데스크톱 화면에 표시합니다. **서버 이력과 지난 검사 대조는 명암비만** 지원합니다.
 
-커밋 8개가 폴더 역할별로 나뉘어 있고, 본문에 판단 근거가 들어 있습니다. `git log -- packages/core` 로 그 영역의 판단만 읽을 수 있습니다.
+화면 캡처는 로컬에 저장합니다. 서버 이력에는 URL·검사 옵션·수치·선택자·텍스트 일부·글꼴 정보가 포함됩니다.
 
-### 검증 상태
+## 자동 검증과 실행 명령
 
-| 항목 | 상태 |
-| --- | --- |
-| `core` 타입 검사 · 테스트 13건 | **통과** |
-| `cli` 타입 검사 · 실제 실행 | **통과** (고정 사례에서 실측 수치 출력) |
-| `desktop` | **미검증** — 클라우드에 GUI 가 없어 한 번도 실행된 적 없음 |
-| Supabase 스키마 | **미적용** — SQL 을 아직 올리지 않음 |
+검사 건수와 측정 조건·로그는 [검증 기록](VALIDATION.md)에 모았습니다. 이번 문서 수정에서는 실행 코드를 바꾸지 않았으며, 기록된 검증을 새 실행 결과로 표현하지 않습니다.
 
-`desktop` 은 코드만 있는 상태입니다. 처음 실행할 때 오류가 나는 것이 정상이라고 보고 접근하세요.
-
-### Supabase
-
-| 항목 | 값 |
-| --- | --- |
-| 프로젝트 | `a11y-lens` · Free |
-| 지역 | Oceania (Sydney) `ap-southeast-2` — 변경 불가, 그대로 가기로 결정 |
-| Project ref | `mhdwrryywwunrppzknxo` |
-| Data API | 켜짐 |
-| 자동 RLS | 켜짐 |
-
-## 4. 남은 일 — 순서대로
-
-### 4-1. 스키마 올리기 ← 지금 여기
-
-`db/schema.sql` 을 Supabase 에 적용합니다. 두 길 중 하나입니다.
-
-- **SQL Editor** 에 붙여넣고 실행 (브라우저)
-- 환경 변수 `SUPABASE_DB_URL` 을 두고 세션에서 `psql` 로 실행 (클라우드)
-
-끝나면 표 세 개(`projects` · `scans` · `findings`)와 **RLS 가 실제로 걸렸는지** 조회로 확인합니다. RLS 가 없으면 공개 키만으로 누구나 전부 읽습니다.
-
-### 4-2. GitHub 로그인 연결
-
-주소가 두 개이고 서로 다릅니다. 여기서 가장 많이 막힙니다.
-
-| 어디 | 넣을 값 |
-| --- | --- |
-| GitHub OAuth App 의 callback URL | `https://mhdwrryywwunrppzknxo.supabase.co/auth/v1/callback` |
-| Supabase → Authentication → Redirect URLs | `a11ylens://auth` |
-
-두 번째를 빠뜨리면 브라우저 로그인은 성공하는데 앱으로 돌아오지 않습니다.
-
-### 4-3. 데스크톱 첫 실행 (로컬 필요)
+`main`:
 
 ```bash
-cp .env.example .env     # MAIN_VITE_ 접두사 주의
 pnpm install
-pnpm dev
+pnpm build
+pnpm typecheck
+pnpm test
 ```
 
-### 4-4. axe-core 어댑터
+`dev` · Node 22 · pnpm 12.16.1:
 
-지금 이 도구는 **명암비만** 봅니다. 이름이 `a11y-lens` 인데 접근성 규칙이 없는 상태라 이게 가장 큰 구멍입니다.
+```bash
+pnpm install --frozen-lockfile
+pnpm exec playwright install --with-deps chromium
+pnpm build
+pnpm typecheck
+pnpm test
+```
 
-접근성 규칙은 자작하지 않고 axe-core 를 번들해 `core` 에 어댑터로 붙입니다. 규칙은 골라서 켭니다 — 전체를 돌리면 "이론상 위반"이 수십 개 나와 아무도 안 봅니다.
+`pnpm verify`·`pnpm test:ci`는 PR #6 전용 추가 명령이고, `pnpm --filter @a11y-lens/desktop test:render`는 PR #7에 추가되어 있습니다. 해당 브랜치에서 사용합니다.
 
-`color-contrast` 규칙은 **끕니다.** 자작 엔진과 기준이 달라(4.5 대 설정값) 결과가 충돌합니다.
+## 남은 일
 
-### 4-5. 보고서 출력
+1. PR #6·#7 검토 후 `dev`에서 합친 상태로 빌드·타입·전체 검사 확인
+2. 실제 Electron에서 로그인·대상 페이지·두 엔진 결과·위치·캡처·명암비 이력 대조 확인
+3. Supabase 스키마·RLS·계정별 격리와 OAuth 복귀 확인
+4. axe 결과의 이력 저장·조회·대조 구현
+5. HTML 보고서와 검사 근거 연결, KWCAG 매핑
+6. 실제 실행을 확인한 스크린샷과 플랫폼별 확인 결과 추가
 
-JSON → 사람이 읽는 HTML. 외주사에 보내는 결과물이 이것이라 실질 가치가 큽니다. 항목마다 선택자 · 실측값 · 기준값 · 색 · 스크린샷이 함께 가야 합니다.
+데스크톱 변경의 `main` 승격·태그는 실제 앱 확인 뒤 진행합니다. 브랜치·PR·릴리스의 상세 운영 규칙은 [개발 브랜치 작업 지침](https://github.com/MinsangKwak/a11y-lens/blob/0ab0e7e4936fc2a7fb2e3ace27a734df87cacbb6/CLAUDE.md#9-브랜치--pr--릴리스)에 있습니다.
 
-### 4-6. KWCAG 항목 매핑
+## Supabase 연결 메모
 
-계약서가 가리키는 지침이 보통 KWCAG 2.2 입니다. axe 규칙 ID → 항목 번호 표를 만듭니다. **지침 원문을 확인하고 적습니다.**
+아래 값은 기존 문서의 설정 메모입니다. 이번 작업에서는 대시보드·DB를 조회하지 않아 현재 활성 상태나 적용 완료를 단정하지 않습니다.
 
-## 5. 클라우드 세션에서 할 수 있는 일 / 없는 일
-
-| 할 수 있다 | 할 수 없다 |
+| 항목 | 기존 기록 |
 | --- | --- |
-| `core` · `cli` 개발과 테스트 | Electron 실행 (GUI 없음) |
-| Playwright 로 실제 페이지 검사 | |
-| `psql` 로 Supabase 조작 (환경 변수 필요) | 브라우저 대시보드 클릭 작업 |
+| 프로젝트 | `a11y-lens` |
+| 지역 | Sydney · `ap-southeast-2` |
+| Project ref | `mhdwrryywwunrppzknxo` |
+| GitHub OAuth callback | `https://mhdwrryywwunrppzknxo.supabase.co/auth/v1/callback` |
+| Supabase Redirect URL | `a11ylens://auth` |
+| 환경 변수 | `.env.example`의 `MAIN_VITE_` 주소·공개 키, DB 작업용 `SUPABASE_DB_URL` |
+| Data API·자동 RLS | 기존 기록은 켜짐. 실제 테이블 정책·계정 간 격리 확인 필요 |
 
-**미검증을 검증된 것처럼 보고하지 않습니다.** 돌려본 척한 보고가 가장 비쌉니다.
+새 DB에 스키마를 적용한 뒤에는 세 테이블과 RLS 정책을 조회합니다. 기존 DB에는 적용 상태를 먼저 확인합니다. OAuth callback과 앱 Redirect URL은 서로 다른 설정입니다.
 
-## 6. 환경 설정
+GUI를 사용하지 않는 설치·검증 환경에서는 `ELECTRON_SKIP_BINARY_DOWNLOAD=1`로 Electron 다운로드를 생략할 수 있습니다. 실제 앱 실행 환경에서는 바이너리가 필요합니다.
 
-a11y-lens 전용 환경을 따로 두는 것을 권합니다. 다른 프로젝트의 토큰과 섞이지 않습니다.
+## 문서 이미지와 저장소 설정
 
-| 항목 | 값 |
-| --- | --- |
-| 저장소 | `MinsangKwak/a11y-lens` |
-| 브랜치 | `main` |
-| 환경 변수 | `SUPABASE_DB_URL` — Supabase 의 **Session pooler** 문자열 (Direct 는 IPv6 전용이라 못 붙음) |
-| 설정 스크립트 | `corepack enable` 다음 `ELECTRON_SKIP_BINARY_DOWNLOAD=1 pnpm install` |
+존재하지 않던 `docs/screenshot.png` 참조를 저장소의 [구조 설명도](assets/architecture.png)로 교체했습니다. [검증 요약도](assets/verification.png)는 PR별 실측과 검증 수를 구분합니다. 두 그림 모두 코드·검증 기록을 설명하는 자료이며 실제 앱 스크린샷이 아닙니다.
 
-Electron 바이너리는 150MB 가 넘는데 클라우드에서는 절대 실행되지 않습니다. 받지 않게 막습니다.
-
-## 7. 알려진 할 일
-
-- 저장소 **Topics 미설정** — 세션 프록시가 쓰기를 막아 직접 넣어야 합니다
-  `gh repo edit MinsangKwak/a11y-lens --add-topic accessibility,a11y,wcag,color-contrast,electron,react,typescript,playwright`
-- 무료 플랜은 **1주일 미사용 시 프로젝트가 멈춥니다.** 포트폴리오로 보여 줄 시기에는 가끔 깨워 두세요
+공개 저장소의 Topics는 설정되어 있어 이전의 미설정 할 일에서 제외했습니다.
