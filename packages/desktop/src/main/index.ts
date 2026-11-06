@@ -32,7 +32,8 @@ function createWindow(): void {
     width: 1440,
     height: 940,
     show: false,
-    webPreferences: { preload: join(here, '../preload/index.js'), sandbox: false },
+    backgroundColor: '#16181d',
+    webPreferences: { preload: join(here, '../preload/index.mjs'), sandbox: false },
   });
 
   inspector = new Inspector();

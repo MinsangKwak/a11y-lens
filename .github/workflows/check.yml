@@ -47,3 +47,6 @@ jobs:
       # 서로의 파일을 쓰지 않는 패키지 테스트는 같은 작업 안에서 함께 실행한다.
       - name: 테스트
         run: pnpm test:ci
+
+      - name: 초기 렌더링 회귀
+        run: pnpm --filter @a11y-lens/desktop test:render

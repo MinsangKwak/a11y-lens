@@ -16,7 +16,7 @@ const pw = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const chromium = (pw.default ?? pw).chromium;
 const url = pathToFileURL(new URL('./fixtures/contrast.html', import.meta.url).pathname).href;
 
-const browser = await chromium.launch();
+const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined });
 const page = await browser.newPage({ viewport: { width: 900, height: 1200 } });
 await page.goto(url);
 const result = await page.evaluate(AUDIT, { ...AA, allowedColors: ['#a8b820'] });

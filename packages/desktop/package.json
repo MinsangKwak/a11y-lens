@@ -8,7 +8,8 @@
     "build": "electron-vite build",
     "typecheck": "tsc -p tsconfig.node.json --noEmit && tsc -p tsconfig.web.json --noEmit",
     "test": "npm run test:ci",
-    "test:ci": "tsc -p tsconfig.test.json && node --test test/*.test.mjs"
+    "test:ci": "tsc -p tsconfig.test.json && node --test test/*.test.mjs",
+    "test:render": "node --test test/rendering.browser.mjs"
   },
   "dependencies": {
     "@a11y-lens/core": "workspace:*",

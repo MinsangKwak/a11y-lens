@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { basename, dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
@@ -17,6 +17,7 @@ function appHarness({ failAxe = false } = {}) {
   const handlers = new Map();
   const calls = [];
   let preferences;
+  let windowOptions;
   class WebContentsView {
     constructor(opts) {
       preferences = opts.webPreferences;
@@ -42,6 +43,7 @@ function appHarness({ failAxe = false } = {}) {
     setBounds() {}
   }
   class BrowserWindow {
+    constructor(options) { windowOptions = options; }
     contentView = { addChildView() {} };
     webContents = { send() {} };
     once() {}
@@ -88,7 +90,7 @@ function appHarness({ failAxe = false } = {}) {
     return module.exports;
   }
   load(resolve(src, 'main/index.ts'));
-  return { handlers, calls, preferences: () => preferences };
+  return { handlers, calls, preferences: () => preferences, windowOptions: () => windowOptions };
 }
 
 test('일반 검사 IPC가 실제 Inspector의 명암비와 접근성 어댑터를 함께 호출한다', async () => {
@@ -116,4 +118,14 @@ test('일반 검사 IPC는 접근성 실행 실패를 성공 결과로 바꾸지
 test('검사 대상이 아직 없으면 일반 검사 IPC는 명시적으로 실패한다', () => {
   const app = appHarness();
   assert.throws(() => app.handlers.get('audit:run')(null, options), /검사 대상이 준비되지/);
+});
+
+test('첫 프레임의 창 바탕은 공통 CSS와 같고 준비되기 전에는 숨겨 둔다', async () => {
+  const app = appHarness();
+  await Promise.resolve();
+  const css = readFileSync(new URL('../src/renderer/src/app.css', import.meta.url), 'utf8');
+  const background = css.match(/--bg:\s*(#[a-f\d]+)/i)[1];
+  assert.equal(app.windowOptions().backgroundColor, background);
+  assert.equal(app.windowOptions().show, false);
+  assert.equal(basename(app.windowOptions().webPreferences.preload), 'index.mjs');
 });
