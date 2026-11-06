@@ -3,7 +3,11 @@
 배포된 웹사이트의 **명암비와 웹 접근성을 검사하는 데스크톱 도구**입니다.
 외주 산출물 검수를 염두에 두고 만들었습니다 — 검사 결과가 그대로 수정 요청 근거가 되어야 합니다.
 
-[진행 현황과 남은 일](docs/PROGRESS.md) · [CI 구조와 실측 결과](docs/CI.md)
+![공통 판정 엔진과 CLI · 데스크톱 · 명암비 이력 대조의 구조](docs/assets/architecture.png)
+
+구조를 설명하는 그림입니다. 실제 Electron 실행 화면이 아니며, 그 확인은 아직 남아 있습니다.
+
+[진행 현황과 남은 일](docs/PROGRESS.md) · [CI 구조와 실측 결과](docs/CI.md) · [검증 기록](docs/VALIDATION.md) · [브랜치 보호 적용안](docs/BRANCH_PROTECTION.md)
 
 ## 왜 데스크톱인가
 
