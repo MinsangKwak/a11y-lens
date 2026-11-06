@@ -11,6 +11,8 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
+    "test:ci": "pnpm -r --parallel test:ci",
+    "verify": "pnpm build && pnpm typecheck && pnpm test:ci",
     "dev": "pnpm --filter @a11y-lens/desktop dev",
     "scan": "pnpm --filter @a11y-lens/cli start"
   },

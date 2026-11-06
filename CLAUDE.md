@@ -55,16 +55,16 @@ import 한 상수도, 모듈 안의 헬퍼도 참조하면 실행 시점에 터�
 ## 6. 검증
 
 ```bash
-pnpm -r build    # 먼저다. core 의 dist/index.d.ts 가 없으면 아래가 통과할 수 없다
-pnpm typecheck
-pnpm test        # core 22건 · cli 13건 · desktop 8건
+pnpm verify     # 전체 빌드 → 타입 검사 → core 22건 · cli 13건 · desktop 8건
 ```
 
 **"통과했다"고 적기 전에 `dist/`와 `out/`을 지우고 다시 돌립니다.** 앞선 작업이 남긴 산출물이 거짓 통과를 만듭니다 — 2026-11-05 에 CI 가 바로 그 자리에서 두 번 깨졌고, 그 전에 "로컬에서 통과" 라고 보고된 상태였습니다.
 
 ```bash
-rm -rf packages/*/dist out && pnpm install --frozen-lockfile && pnpm -r build && pnpm typecheck && pnpm test
+rm -rf packages/*/dist packages/desktop/out && pnpm install --frozen-lockfile && pnpm verify
 ```
+
+`pnpm test`는 개별 실행에 필요한 빌드를 포함합니다. `pnpm test:ci`는 같은 실행에서 전체 빌드를 마친 뒤에만 사용합니다. 이전 실행의 산출물이나 검사 결과로 현재 검사를 대신하지 않습니다. 준비 과정과 실측 기준은 [CI 검증 구조](docs/CI.md)에 적습니다.
 
 테스트에 **특정 기기의 절대 경로를 적지 않습니다.** 그 기기에서만 도는 테스트가 되고, 다른 곳에서는 `ERR_MODULE_NOT_FOUND` 로 터집니다. 도구는 `package.json`에 선언하고 이름으로 부릅니다.
 
@@ -114,15 +114,14 @@ rm -rf packages/*/dist out && pnpm install --frozen-lockfile && pnpm -r build &&
 PR을 열기 전 — 기능 브랜치에서:
 
 ```bash
-pnpm typecheck
-pnpm test
+pnpm verify
 ```
 
 `dev`에 머지한 뒤 — 합쳐진 상태에서:
 
 ```bash
-pnpm install
-pnpm typecheck && pnpm test && pnpm -r build
+pnpm install --frozen-lockfile
+pnpm verify
 ```
 
 `dev`가 빨간 채로 다음 기능을 머지하지 않습니다. 누가 깨뜨렸는지 알 수 없게 됩니다.
